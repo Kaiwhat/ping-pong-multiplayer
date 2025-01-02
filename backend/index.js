@@ -38,8 +38,8 @@ io.on('connection', (socket) => {
                 socketID: socket.id,
                 playerNo: 2,
                 score: 0,
-                x: 690,
-                y: 200,
+                x: 210,
+                y: 30,
             });
 
             // send message to room
@@ -59,14 +59,14 @@ io.on('connection', (socket) => {
                     socketID: socket.id,
                     playerNo: 1,
                     score: 0,
-                    x: 90,
-                    y: 200,
+                    x: 210,
+                    y: 550,
                 }],
                 ball: {
-                    x: 395,
-                    y: 245,
-                    dx: Math.random() < 0.5 ? 1 : -1,
-                    dy: 0,
+                    x: 210,
+                    y: 300,
+                    dx: 1,
+                    dy: 1,
                 },
                 winner: 0,
             }
@@ -80,19 +80,19 @@ io.on('connection', (socket) => {
         let room = rooms.find(room => room.id === data.roomID);
 
         if (room) {
-            if (data.direction === 'up') {
-                room.players[data.playerNo - 1].y -= 10;
-
-                if (room.players[data.playerNo - 1].y < 0) {
-                    room.players[data.playerNo - 1].y = 0;
-                }
+            if (data.direction === 'left') {
+                if (data.playerNo == 2) room.players[data.playerNo - 1].x += 10;
+                else room.players[data.playerNo - 1].x -= 10;
             }
-            else if (data.direction === 'down') {
-                room.players[data.playerNo - 1].y += 10;
-
-                if (room.players[data.playerNo - 1].y > 440) {
-                    room.players[data.playerNo - 1].y = 440;
-                }
+            else if (data.direction === 'right') {
+                if (data.playerNo == 2) room.players[data.playerNo - 1].x -= 10;
+                else room.players[data.playerNo - 1].x += 10;
+            }
+            if (room.players[data.playerNo - 1].x > 390) {
+                room.players[data.playerNo - 1].x = 390;
+            }
+            if (room.players[data.playerNo - 1].x < 0) {
+                room.players[data.playerNo - 1].x = 0;
             }
         }
 
@@ -122,62 +122,42 @@ io.on('connection', (socket) => {
 
 function startGame(room) {
     let interval = setInterval(() => {
-        room.ball.x += room.ball.dx * 5;
-        room.ball.y += room.ball.dy * 5;
+        room.ball.y += room.ball.dy * 2;
+        room.ball.x += room.ball.dx * 2;
 
         // check if ball hits player 1
-        if (room.ball.x < 110 && room.ball.y > room.players[0].y && room.ball.y < room.players[0].y + 60) {
-            room.ball.dx = 1;
-
-            // change ball direction
-            if (room.ball.y < room.players[0].y + 30) {
-                room.ball.dy = -1;
-            }
-            else if (room.ball.y > room.players[0].y + 30) {
-                room.ball.dy = 1;
-            }
-            else {
-                room.ball.dy = 0;
-            }
-        }
-
-        // check if ball hits player 2
-        if (room.ball.x > 690 && room.ball.y > room.players[1].y && room.ball.y < room.players[1].y + 60) {
-            room.ball.dx = -1;
-
-            // change ball direction
-            if (room.ball.y < room.players[1].y + 30) {
-                room.ball.dy = -1;
-            }
-            else if (room.ball.y > room.players[1].y + 30) {
-                room.ball.dy = 1;
-            }
-            else {
-                room.ball.dy = 0;
-            }
-        }
-
-        // up and down walls
-        if (room.ball.y < 5 || room.ball.y > 490) {
+        if (room.ball.y == 550 && room.ball.x > room.players[0].x && room.ball.x < room.players[0].x + 60) {
+            room.ball.dx *= 1;
             room.ball.dy *= -1;
         }
 
-
-        // left and right walls
-        if (room.ball.x < 5) {
-            room.players[1].score += 1;
-            room.ball.x = 395;
-            room.ball.y = 245;
-            room.ball.dx = 1;
-            room.ball.dy = 0;
+        // check if ball hits player 2
+        if (room.ball.y == 50 && room.ball.x > room.players[1].x && room.ball.x < room.players[1].x + 60) {
+            room.ball.dx *= 1;
+            room.ball.dy *= -1;
         }
 
-        if (room.ball.x > 795) {
+        // left and right walls
+        if (room.ball.x < 5 || room.ball.x > 450) {
+            room.ball.dx *= -1;
+        }
+
+
+        // up and down walls
+        if (room.ball.y < 5) {
             room.players[0].score += 1;
-            room.ball.x = 395;
-            room.ball.y = 245;
-            room.ball.dx = -1;
-            room.ball.dy = 0;
+            room.ball.y = 300;
+            room.ball.x = 210;
+            room.ball.dx *= 1;
+            room.ball.dy *= 1;
+        }
+
+        if (room.ball.y > 595) {
+            room.players[1].score += 1;
+            room.ball.y = 300;
+            room.ball.x = 210;
+            room.ball.dx *= 1;
+            room.ball.dy *= 1;
         }
 
 

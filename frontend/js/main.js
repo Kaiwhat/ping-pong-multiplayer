@@ -1,21 +1,16 @@
 import { io } from "https://cdn.socket.io/4.4.1/socket.io.esm.min.js";
-
-
 import Ball from "./ball.js";
 import Player from "./player.js";
-
 
 let startBtn = document.getElementById('startBtn');
 startBtn.addEventListener('click', startGame);
 
-
-
 let message = document.getElementById('message');
 
-
-let canvas = document.getElementById('canvas');
-let ctx = canvas.getContext('2d');
-
+let canvas_l = document.getElementById('canvas_l');
+let canvas_r = document.getElementById('canvas_r');
+let ctx_l = canvas_l.getContext('2d');
+let ctx_r = canvas_r.getContext('2d');
 
 let player1;
 let player2;
@@ -24,7 +19,6 @@ let ball;
 let isGameStarted = false;
 let playerNo = 0;
 let roomID;
-
 
 const socket = io("http://localhost:3000", {
     transports: ['websocket']
@@ -57,9 +51,10 @@ socket.on("startedGame", (room) => {
 
     roomID = room.id;
     message.innerText = "";
+    message.style.display = 'none';
 
-    player1 = new Player(room.players[0].x, room.players[0].y, 20, 60, 'red');
-    player2 = new Player(room.players[1].x, room.players[1].y, 20, 60, 'blue');
+    player1 = new Player(room.players[0].x, room.players[0].y, 60, 20, 'red');
+    player2 = new Player(room.players[1].x, room.players[1].y, 60, 20, 'blue');
 
     player1.score = room.players[0].score;
     player2.score = room.players[1].score;
@@ -69,19 +64,19 @@ socket.on("startedGame", (room) => {
 
     window.addEventListener('keydown', (e) => {
         if (isGameStarted) {
-            if (e.keyCode === 38) {
-                console.log("player move 1 up")
+            if (e.keyCode === 37) {
+                console.log("player move 1 left")
                 socket.emit("move", {
                     roomID: roomID,
                     playerNo: playerNo,
-                    direction: 'up'
+                    direction: 'left'
                 })
-            } else if (e.keyCode === 40) {
-                console.log("player move 1 down")
+            } else if (e.keyCode === 39) {
+                console.log("player move 1 right")
                 socket.emit("move", {
                     roomID: roomID,
                     playerNo: playerNo,
-                    direction: 'down'
+                    direction: 'right'
                 })
             }
         }
@@ -91,8 +86,8 @@ socket.on("startedGame", (room) => {
 });
 
 socket.on("updateGame", (room) => {
-    player1.y = room.players[0].y;
-    player2.y = room.players[1].y;
+    player1.x = room.players[0].x;
+    player2.x = room.players[1].x;
 
     player1.score = room.players[0].score;
     player2.score = room.players[1].score;
@@ -100,37 +95,56 @@ socket.on("updateGame", (room) => {
     ball.x = room.ball.x;
     ball.y = room.ball.y;
 
-    draw();
+    if (playerNo==1){
+        draw_l();
+        canvas_r.style.display="none";
+        document.getElementsByClassName("container")[0].style.flexDirection = "row";
+    }
+    if (playerNo==2){
+        draw_r();
+        canvas_l.style.display="none";
+        document.getElementsByClassName("container")[0].style.flexDirection = "row";
+
+    }
 });
 
 socket.on("endGame", (room) => {
     isGameStarted = false;
-    message.innerText = `${room.winner === playerNo ? "You are Winner!" : "You are Loser!"}`;
-
     socket.emit("leave", roomID);
-
-
-    setTimeout(() => {
-        ctx.clearRect(0, 0, 800, 500);
-        startBtn.style.display = 'block';
-    }, 2000);
 });
 
 
 
-function draw() {
-    ctx.clearRect(0, 0, 800, 500);
+function draw_l() {
+    // player 1 view
+    ctx_l.clearRect(0, 0, 450, 600);
 
-
-    player1.draw(ctx);
-    player2.draw(ctx);
-    ball.draw(ctx);
+    player1.draw_l(ctx_l);
+    player2.draw_l(ctx_l);
+    ball.draw_l(ctx_l);
 
     // center line
-    ctx.strokeStyle = 'white';
-    ctx.beginPath();
-    ctx.setLineDash([10, 10])
-    ctx.moveTo(400, 5);
-    ctx.lineTo(400, 495);
-    ctx.stroke();
+    ctx_l.strokeStyle = 'white';
+    ctx_l.beginPath();
+    ctx_l.setLineDash([10, 10])
+    ctx_l.moveTo(5, 300);
+    ctx_l.lineTo(450, 300);
+    ctx_l.stroke();
+}
+
+function draw_r(){
+    // player 2 view
+    ctx_r.clearRect(0, 0, 450, 600);
+
+    player1.draw_r(ctx_r);
+    player2.draw_r(ctx_r);
+    ball.draw_r(ctx_r);
+
+    // center line
+    ctx_r.strokeStyle = 'white';
+    ctx_r.beginPath();
+    ctx_r.setLineDash([10, 10])
+    ctx_r.moveTo(5, 300);
+    ctx_r.lineTo(450, 300);
+    ctx_r.stroke();
 }
